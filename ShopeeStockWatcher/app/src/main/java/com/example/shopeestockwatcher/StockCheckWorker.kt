@@ -18,14 +18,14 @@ class StockCheckWorker(context: Context, params: WorkerParameters) :
         val url = inputData.getString("product_url") ?: return Result.failure()
         createNotificationChannel()
         if (!isValidShopeeUrl(url)) {
-            sendNotification("Invalid Shopee URL", "The provided link is not a valid Shopee item.")
+            sendNotification("Invalid URL", "This is not a valid Shopee product link")
             Timber.e("Invalid Shopee URL: $url")
             return Result.failure()
         }
         val inStock = checkStock(url)
-        Timber.d("Stock check completed at: ${System.currentTimeMillis()} for $url")
+        Timber.d("Checked stock for: $url")
         if (inStock) {
-            sendNotification("Item is back in stock!", "Check it out now: $url")
+            sendNotification("Back in Stock!", "The product is now available")
         }
         return Result.success()
     }
@@ -42,7 +42,7 @@ class StockCheckWorker(context: Context, params: WorkerParameters) :
 
     private fun sendNotification(title: String, message: String) {
         val notification = NotificationCompat.Builder(applicationContext, "StockChannel")
-            .setSmallIcon(R.drawable.ic_stock)
+            .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setContentTitle(title)
             .setContentText(message)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
