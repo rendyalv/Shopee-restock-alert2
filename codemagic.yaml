@@ -1,0 +1,25 @@
+workflows:
+  android-workflow:
+    name: Android Build
+    max_build_duration: 30
+    working_directory: ShopeeStockWatcher
+    environment:
+      android:
+        version: 34
+      java: 17
+
+    scripts:
+      - name: Build Debug APK
+        script: ./gradlew clean assembleDebug
+
+      - name: Build Release APK
+        script: ./gradlew clean assembleRelease
+
+    artifacts:
+      - app/build/outputs/**/*.apk
+      - app/build/outputs/**/*.aab
+
+    publishing:
+      email:
+        recipients:
+          - your-email@example.com
