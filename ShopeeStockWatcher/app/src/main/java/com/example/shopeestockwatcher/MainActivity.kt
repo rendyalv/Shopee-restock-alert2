@@ -1,57 +1,38 @@
-package com.example.shopeestockwatcher
+package com.example.shopeewatcher
 
-import android.content.Context
-import android.content.Intent
 import android.os.Bundle
-import android.widget.Button
-import android.widget.EditText
-import android.widget.TextView
-import androidx.appcompat.app.AppCompatActivity
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.work.*
+import com.example.shopeewatcher.ui.theme.ShopeeWatcherTheme
+import java.util.concurrent.TimeUnit
 
-class MainActivity : AppCompatActivity() {
-    private lateinit var inputUrl: EditText
-    private lateinit var inputInterval: EditText
-    private lateinit var btnStart: Button
-    private lateinit var btnStop: Button
-    private lateinit var status: TextView
-
-    private val prefsName = "ShopeeStockWatcherPrefs"
-
+class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
-
-        inputUrl = findViewById(R.id.inputUrl)
-        inputInterval = findViewById(R.id.inputInterval)
-        btnStart = findViewById(R.id.btnStart)
-        btnStop = findViewById(R.id.btnStop)
-        status = findViewById(R.id.status)
-
-        NotificationHelper.createChannel(this)
-
-        // Load saved settings
-        val prefs = getSharedPreferences(prefsName, Context.MODE_PRIVATE)
-        inputUrl.setText(prefs.getString("url", ""))
-        inputInterval.setText(prefs.getLong("interval", 5).toString())
-
-        btnStart.setOnClickListener {
-            val url = inputUrl.text.toString().trim()
-            val intervalMin = inputInterval.text.toString().toLongOrNull() ?: 5
-
-            // Save settings
-            prefs.edit().putString("url", url).putLong("interval", intervalMin).apply()
-
-            val i = Intent(this, ForegroundCheckService::class.java)
-            i.putExtra("url", url)
-            i.putExtra("interval", intervalMin)
-            startService(i)
-
-            status.text = "Watching every $intervalMin min: $url"
+        setContent {
+            ShopeeWatcherTheme {
+                // TODO: Add UI with input for product URL & Start Watching button
+                // Example: startWatching("https://shopee.co.id/someproduct")
+            }
         }
+    }
 
-        btnStop.setOnClickListener {
-            stopService(Intent(this, ForegroundCheckService::class.java))
-            status.text = "Stopped"
-        }
+    private fun startWatching(productUrl: String) {
+        val oneTimeRequest = OneTimeWorkRequestBuilder<StockCheckWorker>()
+            .setInputData(workDataOf("product_url" to productUrl))
+            .build()
+        WorkManager.getInstance(this).enqueue(oneTimeRequest)
+
+        val periodicRequest = PeriodicWorkRequestBuilder<StockCheckWorker>(
+            15, TimeUnit.MINUTES
+        ).setInputData(workDataOf("product_url" to productUrl))
+         .build()
+
+        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+            "StockCheck",
+            ExistingPeriodicWorkPolicy.UPDATE,
+            periodicRequest
+        )
     }
 }
